@@ -21,6 +21,7 @@
 #import "LocalTrack.h"
 #import "LocalAudioTrack.h"
 #import "LocalVideoTrack.h"
+#import "CustomVideoDecoderFactory.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wprotocol"
@@ -242,14 +243,22 @@ static FlutterWebRTCPlugin *sharedSingleton;
 #endif
 }
 
+- (void)setTrackIdForNextDecoder:(NSString*)trackId {
+    NSLog(@"FlutterWebRTC: setTrackIdForNextDecoder");
+    [CustomVideoDecoderFactory setTrackId:trackId];
+}
+
 - (void)initialize:(NSArray*)networkIgnoreMask
 bypassVoiceProcessing:(BOOL)bypassVoiceProcessing {
     // RTCSetMinDebugLogLevel(RTCLoggingSeverityVerbose);
     if (!_peerConnectionFactory) {
-        VideoDecoderFactory* decoderFactory = [[VideoDecoderFactory alloc] init];
+        _audioManager = [AudioManager sharedInstance];
+        
         VideoEncoderFactory* encoderFactory = [[VideoEncoderFactory alloc] init];
-
-        VideoEncoderFactorySimulcast* simulcastFactory =
+        NSLog(@"FlutterWebRTC: CustomVideoDecoderFactory");
+        CustomVideoDecoderFactory* decoderFactory = [[CustomVideoDecoderFactory alloc] init];
+        
+        VideoEncoderFactorySimulcast* simulcastFactory = 
             [[VideoEncoderFactorySimulcast alloc] initWithPrimary:encoderFactory fallback:encoderFactory];
 
         _peerConnectionFactory =
@@ -282,6 +291,8 @@ bypassVoiceProcessing:(BOOL)bypassVoiceProcessing {
         }
 
         [_peerConnectionFactory setOptions: options];
+
+        [self startAudioInterception];
     }
 }
 
@@ -1544,6 +1555,7 @@ bypassVoiceProcessing:(BOOL)bypassVoiceProcessing {
 }
 
 - (void)dealloc {
+  [self stopAudioInterception];
   [_localTracks removeAllObjects];
   _localTracks = nil;
   [_localStreams removeAllObjects];

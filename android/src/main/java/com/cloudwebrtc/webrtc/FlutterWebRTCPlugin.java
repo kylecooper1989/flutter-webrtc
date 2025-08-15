@@ -32,7 +32,10 @@ import io.flutter.view.TextureRegistry;
  * FlutterWebRTCPlugin
  */
 public class FlutterWebRTCPlugin implements FlutterPlugin, ActivityAware, EventChannel.StreamHandler {
-
+   static {
+        System.loadLibrary("native_lib");
+    }
+    
     static public final String TAG = "FlutterWebRTCPlugin";
     private static Application application;
 
